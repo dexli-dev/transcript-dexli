@@ -1,0 +1,135 @@
+/* transcript · dexli.dev — family palette + base reset.
+   Shared design tokens across the dexli.dev tiny-tools family. The lime-on-
+   dark phosphor-terminal aesthetic comes from tinywebhook (webhook.dexli.dev,
+   shipped 2026-05-25) and is inherited here verbatim as the family identity. */
+
+:root {
+	/* Family palette — these names are the contract components import. */
+	--bg: #0a0b0d;
+	--fg: #e7ebf0;
+	--accent: #c6f135;
+	--accent-dim: #9bbd2a;
+	--muted: #99a1ad;
+
+	/* Layered surfaces — derived from --bg, used by any UI that needs
+	   elevation (cards, modals, code blocks). */
+	--surface: #121419;
+	--surface-2: #171a20;
+	--surface-3: #1d2128;
+	--border: #262b33;
+	--border-soft: #1c2028;
+
+	/* Accent glow for atmospheric backdrops + button focus rings. */
+	--accent-glow: rgba(198, 241, 53, 0.18);
+
+	/* Text variants alongside --muted, for layered typography. */
+	--text-faint: #5d6470;
+	--text: var(--fg);
+
+	/* Generic shape tokens. */
+	--radius: 10px;
+	--radius-sm: 6px;
+	--maxw: 1180px;
+	--shadow: 0 18px 50px -20px rgba(0, 0, 0, 0.8);
+
+	/* Font-family tokens default to system stacks so the scaffold renders
+	   cleanly without font files in place. fonts.css overrides these with
+	   the family-canonical Bricolage Grotesque + JetBrains Mono. */
+	--mono: ui-monospace, 'SF Mono', Menlo, monospace;
+	--display: system-ui, sans-serif;
+}
+
+/* ---- Minimal base reset ---- */
+
+* {
+	box-sizing: border-box;
+}
+
+html,
+body {
+	margin: 0;
+	padding: 0;
+}
+
+body {
+	background: var(--bg);
+	color: var(--fg);
+	font-family: var(--mono);
+	font-size: 14px;
+	line-height: 1.55;
+	-webkit-font-smoothing: antialiased;
+	text-rendering: optimizeLegibility;
+	min-height: 100vh;
+}
+
+h1,
+h2,
+h3,
+h4 {
+	font-family: var(--display);
+	font-weight: 800;
+	letter-spacing: -0.02em;
+	line-height: 1.05;
+	margin: 0;
+}
+
+a {
+	color: var(--accent);
+	text-decoration: none;
+}
+a:hover {
+	text-decoration: underline;
+}
+
+button {
+	font-family: var(--mono);
+	cursor: pointer;
+}
+
+::selection {
+	background: var(--accent);
+	color: var(--bg);
+}
+
+/* Family-template a11y baseline per CPO-banked O-2 addendum 2026-05-29:
+   every dexli.dev family route's build output must contain at least one
+   `:focus-visible` rule applicable to interactive elements. Single global
+   rule here covers the baseline across all routes; components may layer
+   more specific `:focus-visible` treatments on top. */
+button:focus-visible,
+a:focus-visible,
+[role='button']:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+summary:focus-visible {
+	outline: 2px solid var(--accent);
+	outline-offset: 2px;
+	border-radius: var(--radius-sm);
+}
+
+/* Thin custom scrollbars to match the family terminal feel. */
+*::-webkit-scrollbar {
+	width: 10px;
+	height: 10px;
+}
+*::-webkit-scrollbar-track {
+	background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+	background: var(--surface-3);
+	border-radius: 8px;
+	border: 2px solid var(--bg);
+}
+*::-webkit-scrollbar-thumb:hover {
+	background: #2b313b;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.001ms !important;
+		transition-duration: 0.001ms !important;
+	}
+}

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+	<rect width="32" height="32" rx="7" fill="#0a0b0d" />
+	<!-- '❝' (heavy quotation ornament) — sixth-distinct family glyph for
+	     transcript.dexli.dev. Distinct from every locked sibling glyph
+	     (⌁ webhook / ◷ cron / ∋ regex / Δ diff / ❖ apex). Same palette as
+	     sibling favicons (dark tile + #c6f135 lime). Drawn as paths — two
+	     opening-quote commas — for consistent rendering across font
+	     availability. -->
+	<path d="M8 13.2 C8 9.8 10.4 7.5 13.6 7.3 v3.1 c-1.5 0.3-2.4 1.2-2.5 2.8 H13.6 v7.5 H8 Z" fill="#c6f135" />
+	<path d="M18.4 13.2 c0-3.4 2.4-5.7 5.6-5.9 v3.1 c-1.5 0.3-2.4 1.2-2.5 2.8 H24 v7.5 h-5.6 Z" fill="#c6f135" />
+</svg>
