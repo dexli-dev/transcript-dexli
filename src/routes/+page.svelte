@@ -119,6 +119,7 @@
 	const DIALECT_LABEL: Record<string, string> = {
 		'claude-code': 'Claude Code session',
 		'openai-chat': 'OpenAI chat / fine-tune',
+		'prompt-reply': 'prompt/reply pairs',
 		'generic-chat': 'generic chat lines',
 		unknown: 'unrecognized'
 	};
@@ -164,6 +165,7 @@
 				<p class="dialects">
 					understands: <span class="d">Claude Code session logs</span> ·
 					<span class="d">OpenAI chat / fine-tune files</span> ·
+					<span class="d">{'{prompt, reply}'} eval/bench logs</span> ·
 					<span class="d">generic {'{role, content}'} lines</span>
 				</p>
 			</section>

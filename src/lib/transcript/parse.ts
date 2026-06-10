@@ -18,6 +18,12 @@
 //   conversation: {"messages": [{role, content}, ...]}. A file is therefore
 //   a LIST of conversations.
 //
+// prompt-reply — eval/bench logs: one {prompt, reply} pair per line (aliases
+//   question/answer, input/output), optionally annotated with probe ids,
+//   categories, latency and capability/tool calls. A header line carrying
+//   run metadata ({model, started, finished, …}, no pair) renders as a
+//   system note and donates its model/timestamps to the run.
+//
 // generic-chat — one {role|speaker|from, content|text|message} object per
 //   line; single conversation. The escape hatch for everything else.
 
@@ -149,21 +155,40 @@ const CC_LINE_TYPES = new Set([
 	'x-compact-boundary'
 ]);
 
+const PR_ALIASES: ReadonlyArray<readonly [string, string]> = [
+	['prompt', 'reply'],
+	['question', 'answer'],
+	['input', 'output']
+];
+
+/** {prompt, reply}-shaped line (or an alias pair)? Returns the pair. */
+function prPair(o: Json): readonly [string, string] | null {
+	for (const [p, r] of PR_ALIASES) {
+		if (typeof o[p] === 'string' && typeof o[r] === 'string') {
+			return [o[p] as string, o[r] as string];
+		}
+	}
+	return null;
+}
+
 export function detectDialect(objs: Json[]): Dialect {
 	if (objs.length === 0) return 'unknown';
 	let cc = 0;
 	let oa = 0;
+	let pr = 0;
 	let gen = 0;
 	for (const o of objs.slice(0, 50)) {
 		const t = typeof o.type === 'string' ? o.type : '';
 		if (CC_LINE_TYPES.has(t) && (isObj(o.message) || t !== 'user')) cc++;
 		else if (Array.isArray(o.messages)) oa++;
+		else if (prPair(o)) pr++;
 		else if ('role' in o || 'speaker' in o || 'from' in o) gen++;
 	}
-	const max = Math.max(cc, oa, gen);
+	const max = Math.max(cc, oa, pr, gen);
 	if (max === 0) return 'unknown';
 	if (max === cc) return 'claude-code';
 	if (max === oa) return 'openai-chat';
+	if (max === pr) return 'prompt-reply';
 	return 'generic-chat';
 }
 
@@ -278,6 +303,77 @@ export async function parseJsonl(raw: string, opts: ParseOptions = {}): Promise<
 				conversations.push({ title: `conversation ${conversations.length + 1}`, messages: msgs });
 			}
 		}
+	} else if (dialect === 'prompt-reply') {
+		const msgs: Msg[] = [];
+		let runModel: string | undefined;
+		let finished: string | undefined;
+		for (const { o, line } of objs) {
+			const pair = prPair(o);
+			if (!pair) {
+				// metadata/header line — donate model + timestamps to the run,
+				// surface the scalar facts as a system note
+				if (typeof o.model === 'string') runModel = o.model;
+				if (typeof o.finished === 'string') finished = o.finished;
+				const facts = Object.entries(o)
+					.filter(([, v]) => typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean')
+					.map(([k, v]) => `${k}: ${v}`)
+					.join(' · ');
+				if (facts) {
+					msgs.push({
+						i: msgs.length,
+						line,
+						role: 'system',
+						blocks: [{ kind: 'text', text: cap(`[run header] ${facts}`) }],
+						ts: typeof o.started === 'string' ? o.started : undefined
+					});
+				}
+				continue;
+			}
+			const [prompt, reply] = pair;
+			const label = [o.probe_id, o.id, o.category]
+				.filter((v): v is string => typeof v === 'string')
+				.join(' · ');
+			msgs.push({
+				i: msgs.length,
+				line,
+				role: 'user',
+				blocks: [{ kind: 'text', text: cap(prompt) }],
+				note: label || undefined
+			});
+			const blocks: Block[] = [];
+			const calls = Array.isArray(o.capability_calls)
+				? o.capability_calls
+				: Array.isArray(o.tool_calls)
+					? o.tool_calls
+					: [];
+			{
+				for (const c of calls) {
+					if (!isObj(c)) continue;
+					blocks.push({
+						kind: 'tool_use',
+						name: String(c.op ?? c.name ?? c.tool ?? 'capability'),
+						input: cap(asText(c.args ?? c.input ?? ''))
+					});
+					if (c.resultSummary != null || c.result != null) {
+						blocks.push({ kind: 'tool_result', text: cap(asText(c.resultSummary ?? c.result)) });
+					}
+				}
+			}
+			blocks.push({ kind: 'text', text: cap(reply) });
+			msgs.push({
+				i: msgs.length,
+				line,
+				role: 'assistant',
+				blocks,
+				model: typeof o.model === 'string' ? o.model : runModel,
+				note: typeof o.ms === 'number' ? `${o.ms} ms` : undefined
+			});
+		}
+		// span closes at the run's finished timestamp when the header carried one
+		if (finished && msgs.length > 0 && !msgs[msgs.length - 1].ts) {
+			msgs[msgs.length - 1].ts = finished;
+		}
+		if (msgs.length > 0) conversations.push({ messages: msgs });
 	} else if (dialect === 'claude-code' || dialect === 'generic-chat') {
 		const msgs: Msg[] = [];
 		for (const { o, line } of objs) {

@@ -112,6 +112,74 @@ describe('openai-chat parsing', () => {
 	});
 });
 
+describe('prompt-reply parsing (eval/bench logs)', () => {
+	it('parses a bench run: header line + probe lines + capability calls', async () => {
+		const raw = [
+			JSON.stringify({
+				model: 'gemma4:12b-it-qat',
+				started: '2026-06-10T20:35:21+02:00',
+				finished: '2026-06-10T21:03:41+02:00',
+				probes: 2,
+				kernel_commit: 'a6e41cb'
+			}),
+			JSON.stringify({
+				probe_id: 'hist-01',
+				category: 'history',
+				prompt: 'What are you named after?',
+				reply: 'A jam brand.',
+				ms: 22325,
+				capability_calls: []
+			}),
+			JSON.stringify({
+				probe_id: 'mis-04',
+				category: 'mission',
+				prompt: 'What is the mission?',
+				reply: 'Order from complexity.',
+				ms: 18001,
+				capability_calls: [{ op: 'engram.search', resultSummary: '[{"layer":"L2","score":0.5}]' }]
+			})
+		].join('\n');
+
+		const r = await parseJsonl(raw);
+		expect(r.dialect).toBe('prompt-reply');
+		expect(r.errors).toHaveLength(0);
+		const msgs = r.conversations[0].messages;
+		// header system note + 2 × (user + assistant)
+		expect(msgs).toHaveLength(5);
+		expect(msgs[0].role).toBe('system');
+		expect(msgs[0].blocks[0]).toMatchObject({ kind: 'text' });
+		expect((msgs[0].blocks[0] as { text: string }).text).toContain('gemma4:12b-it-qat');
+		// probe → user with id·category note
+		expect(msgs[1].role).toBe('user');
+		expect(msgs[1].note).toBe('hist-01 · history');
+		// reply → assistant with run model + latency note
+		expect(msgs[2].role).toBe('assistant');
+		expect(msgs[2].model).toBe('gemma4:12b-it-qat');
+		expect(msgs[2].note).toBe('22325 ms');
+		// capability call → tool_use + tool_result ahead of the reply text
+		expect(msgs[4].blocks.map((b) => b.kind)).toEqual(['tool_use', 'tool_result', 'text']);
+		expect(msgs[4].blocks[0]).toMatchObject({ kind: 'tool_use', name: 'engram.search' });
+		// run span: header started → finished donated to the last message
+		expect(r.stats.span).toEqual(['2026-06-10T20:35:21+02:00', '2026-06-10T21:03:41+02:00']);
+		expect(r.stats.models).toEqual(['gemma4:12b-it-qat']);
+		expect(r.stats.toolCalls).toBe(1);
+	});
+
+	it('accepts question/answer and input/output alias pairs', async () => {
+		const qa = await parseJsonl(JSON.stringify({ question: '2+2?', answer: '4' }));
+		expect(qa.dialect).toBe('prompt-reply');
+		expect(qa.conversations[0].messages.map((m) => m.role)).toEqual(['user', 'assistant']);
+		const io = await parseJsonl(JSON.stringify({ input: 'ping', output: 'pong' }));
+		expect(io.dialect).toBe('prompt-reply');
+		expect(io.conversations[0].messages).toHaveLength(2);
+	});
+
+	it('does not misdetect role-shaped lines as prompt-reply', async () => {
+		const r = await parseJsonl(JSON.stringify({ role: 'user', content: 'plain chat line' }));
+		expect(r.dialect).toBe('generic-chat');
+	});
+});
+
 describe('generic-chat parsing', () => {
 	it('accepts {role, content} lines', async () => {
 		const raw = [

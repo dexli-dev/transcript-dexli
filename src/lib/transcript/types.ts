@@ -2,7 +2,7 @@
 // dialects into one renderable shape so the UI never branches on dialect.
 
 /** Detected input dialect. */
-export type Dialect = 'claude-code' | 'openai-chat' | 'generic-chat' | 'unknown';
+export type Dialect = 'claude-code' | 'openai-chat' | 'prompt-reply' | 'generic-chat' | 'unknown';
 
 /** Normalized speaker role. */
 export type Role = 'user' | 'assistant' | 'system' | 'tool' | 'unknown';
@@ -28,6 +28,8 @@ export interface Msg {
 	model?: string;
 	/** true when this line belongs to a subagent sidechain (Claude Code) */
 	sidechain?: boolean;
+	/** small annotation chip (e.g. bench probe id/category, latency) */
+	note?: string;
 	/** source line number in the file (1-based), for error reporting / jump */
 	line: number;
 }

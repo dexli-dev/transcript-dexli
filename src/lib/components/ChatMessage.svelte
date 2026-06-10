@@ -45,6 +45,7 @@
 		<span class="role">{ROLE_LABEL[msg.role]}</span>
 		{#if msg.sidechain}<span class="chip side">sidechain</span>{/if}
 		{#if msg.model}<span class="chip model">{msg.model}</span>{/if}
+		{#if msg.note}<span class="chip">{msg.note}</span>{/if}
 		{#if flagged}<span class="chip flag">⚠ secret flagged</span>{/if}
 		<span class="spacer"></span>
 		{#if msg.ts}<time datetime={msg.ts}>{clock(msg.ts)}</time>{/if}
