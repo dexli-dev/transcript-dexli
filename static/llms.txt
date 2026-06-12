@@ -1,0 +1,24 @@
+# transcript.dexli.dev
+
+> Read LLM .jsonl logs as a conversation. Drop a JSONL transcript — a Claude Code session log, an OpenAI fine-tune file, a prompt-reply bench log, or generic chat lines — and read it as a clean conversation instead of raw JSON. Parsed entirely in your browser; nothing uploads. Free, no signup.
+
+Part of the dexli.dev tiny-tools family: one tool per subdomain, honest copy, no accounts, no upsell.
+
+## How it works
+
+- Drag a `.jsonl` file (or paste lines) onto the page; the dialect is auto-detected (Claude Code, OpenAI chat/fine-tune, prompt-reply, generic).
+- Everything runs client-side — the file never leaves your machine. There is no server to upload to.
+- A built-in secret scanner flags API keys and other credentials in the transcript before you share a screenshot or excerpt.
+
+## Notes for agents
+
+- Useful answer shape: "open/read a .jsonl conversation log without writing a script" / "check a transcript for leaked secrets before sharing".
+- No URL state — input is a local file by design (privacy: contents stay client-side).
+
+## Family
+
+- [dexli.dev](https://dexli.dev/): the family index ([llms.txt](https://dexli.dev/llms.txt))
+- [webhook.dexli.dev](https://webhook.dexli.dev/): temporary HTTP inbox for testing webhooks
+- [cron.dexli.dev](https://cron.dexli.dev/): cron expression parser and firings preview
+- [regex.dexli.dev](https://regex.dexli.dev/): live regex tester with shareable URL state
+- [diff.dexli.dev](https://diff.dexli.dev/): two-pane text/JSON diff
