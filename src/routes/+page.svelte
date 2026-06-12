@@ -15,6 +15,16 @@
 		url: 'https://transcript.dexli.dev/',
 		ogImage: 'https://transcript.dexli.dev/og-card.png'
 	};
+	const JSON_LD = {
+		'@context': 'https://schema.org',
+		'@type': 'WebApplication',
+		name: 'transcript.dexli.dev',
+		description: SEO.description,
+		url: SEO.url,
+		applicationCategory: 'DeveloperApplication',
+		operatingSystem: 'Any',
+		offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' }
+	};
 
 	const WINDOW = 300;
 
@@ -141,6 +151,8 @@
 	<meta name="twitter:title" content={SEO.title} />
 	<meta name="twitter:description" content={SEO.description} />
 	<meta name="twitter:image" content={SEO.ogImage} />
+
+	{@html `<script type="application/ld+json">${JSON.stringify(JSON_LD)}</script>`}
 </svelte:head>
 
 <div class="page">
