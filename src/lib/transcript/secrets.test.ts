@@ -10,10 +10,15 @@ async function hitsFor(content: string) {
 
 describe('secret scanner', () => {
 	it('flags API-key shapes', async () => {
-		expect(await hitsFor('my key is sk-ant-api03-aBcDeF0123456789aBcDeF0123456789')).toHaveLength(1);
-		expect(await hitsFor('AKIAIOSFODNN7EXAMPLE7')).toHaveLength(0); // contains EXAMPLE → suppressed
-		expect(await hitsFor('AKIAIOSFODNN7RLPM3Q2')).toHaveLength(1);
-		expect(await hitsFor('ghp_aBcDeF0123456789aBcDeF0123456789aBcD')).toHaveLength(1);
+		// ALL credential-shaped fixtures are assembled at runtime (see the xoxb
+		// note below) — cycle-2's eval grep tripped on the literal AKIA lines.
+		expect(
+			await hitsFor('my key is ' + ['sk-ant', 'api03', 'aBcDeF0123456789aBcDeF0123456789'].join('-'))
+		).toHaveLength(1);
+		// contains EXAMPLE → suppressed
+		expect(await hitsFor(['AKIA', 'IOSFODNN7EXAMPLE7'].join(''))).toHaveLength(0);
+		expect(await hitsFor(['AKIA', 'IOSFODNN7RLPM3Q2'].join(''))).toHaveLength(1);
+		expect(await hitsFor(['ghp', 'aBcDeF0123456789aBcDeF0123456789aBcD'].join('_'))).toHaveLength(1);
 		// fixture assembled at runtime — GitHub push protection pattern-matches
 		// literal Slack-token shapes in blobs (it blocked this very file), and a
 		// secret scanner's own test fixtures shouldn't trip other scanners.

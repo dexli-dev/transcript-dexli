@@ -9,15 +9,17 @@
 	}
 	let { onload, onsample, busy = false }: Props = $props();
 
+	import { firstFileText } from '$lib/intake';
+
 	let dragging = $state(false);
 	let pasting = $state(false);
 	let pasteText = $state('');
 	let fileInput: HTMLInputElement | undefined = $state();
 
 	async function handleFiles(files: FileList | null) {
-		const f = files?.[0];
-		if (!f) return;
-		onload(await f.text(), f.name);
+		const got = await firstFileText(files);
+		if (!got) return;
+		onload(got.raw, got.name);
 	}
 
 	function onDrop(e: DragEvent) {
